@@ -9,7 +9,7 @@ var User = require('../models/user');
 app.get('/', (req, res, next) => {
     var from = req.query.from || 0;
     from = Number(from);
-    User.find({}, 'name email image role')
+    User.find({}, 'name email image role google')
         .skip(from)
         .limit(5)
         .exec((err, users) => {
@@ -31,7 +31,7 @@ app.get('/', (req, res, next) => {
 });
 
 // Create user
-app.post('/', authMiddleware.verifyToken, (req, res) => {
+app.post('/', (req, res) => {
     var body = req.body;
     var user = new User({
         name: body.name,
@@ -56,7 +56,7 @@ app.post('/', authMiddleware.verifyToken, (req, res) => {
 });
 
 // Update user
-app.put('/:id', authMiddleware.verifyToken, (req, res) => {
+app.put('/:id', [authMiddleware.verifyToken, authMiddleware.isAdminOrSameUser], (req, res) => {
     const id = req.params.id;
     User.findById(id, (err, user) => {
         if (err) {
@@ -96,7 +96,7 @@ app.put('/:id', authMiddleware.verifyToken, (req, res) => {
 });
 
 // Delete user
-app.delete('/:id', authMiddleware.verifyToken, (req, res) => {
+app.delete('/:id', [authMiddleware.verifyToken, authMiddleware.isAdmin], (req, res) => {
     const id = req.params.id;
     User.findByIdAndRemove(id, (err, user) => {
         if (err) {

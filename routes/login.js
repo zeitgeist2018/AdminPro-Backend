@@ -4,7 +4,7 @@ var jwt = require('jsonwebtoken');
 const SEED = require('../config/config').SEED;
 
 // Google
-const { OAuth2Client } = require('google-auth-library');
+const {OAuth2Client} = require('google-auth-library');
 const CLIENT_ID = require('../config/config').CLIENT_ID;
 const client = new OAuth2Client(CLIENT_ID);
 
@@ -31,6 +31,12 @@ async function verify(token) {
 app.post('/google', async (req, res) => {
     //const token = req.body.token;
     const token = req.headers.authorization;
+    if (!token) {
+        return res.status(403).json({
+            ok: false,
+            message: 'Token not provided'
+        });
+    }
     let googleUser = await verify(token)
         .catch(err => {
             return res.status(403).json({
@@ -38,7 +44,7 @@ app.post('/google', async (req, res) => {
                 message: 'Invalid token'
             });
         });
-    User.findOne({ email: googleUser.email }, (err, user) => {
+    User.findOne({email: googleUser.email}, (err, user) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
@@ -54,12 +60,13 @@ app.post('/google', async (req, res) => {
                 });
             }
             // It exists and used google registration/login
-            var token = jwt.sign({ user: user }, SEED, { expiresIn: 14400 });
-            res.status(200).json({
+            var token = jwt.sign({user: user}, SEED, {expiresIn: 14400});
+            return res.status(200).json({
                 ok: true,
                 message: 'Logged in succesfully',
                 token: token,
-                user: user
+                user: user,
+                menu: getMenu(user.role)
             });
         } else {    // User's first Google SignIn
             let user = new User({
@@ -77,12 +84,13 @@ app.post('/google', async (req, res) => {
                         errors: err
                     });
                 }
-                var token = jwt.sign({ user: user }, SEED, { expiresIn: 14400 });
+                var token = jwt.sign({user: user}, SEED, {expiresIn: 14400});
                 return res.status(200).json({
                     ok: true,
                     message: 'User registered successfully',
                     user: savedUser,
-                    token: token
+                    token: token,
+                    menu: getMenu(savedUser.role)
                 });
             });
         }
@@ -92,7 +100,7 @@ app.post('/google', async (req, res) => {
 // User/Password Authentication
 app.post('/', (req, res) => {
     var body = req.body;
-    User.findOne({ email: body.email }, (err, user) => {
+    User.findOne({email: body.email}, (err, user) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
@@ -108,19 +116,50 @@ app.post('/', (req, res) => {
         }
         if (!bcrypt.compareSync(body.password, user.password)) {
             return res.status(403).json({
-                ok: true,
+                ok: false,
                 message: 'Invalid credentials'
             });
         }
         user.password = "";
-        var token = jwt.sign({ user: user }, SEED, { expiresIn: 14400 });
+        var token = jwt.sign({user: user}, SEED, {expiresIn: 14400});
         res.status(200).json({
             ok: true,
             message: 'Logged in succesfully',
             token: token,
-            user: user
+            user: user,
+            menu: getMenu(user.role)
         });
     });
 });
+
+function getMenu(role) {
+    const menu = [
+        {
+            title: 'Principal',
+            icon: 'mdi mdi-gauge',
+            submenus: [
+                {title: 'Dashboard', url: '/dashboard'},
+                {title: 'Progress bar', url: '/progress'},
+                {title: 'Charts', url: '/graphs1'},
+                {title: 'Promises', url: '/promises'},
+                {title: 'RxJs', url: '/rxjs'}
+            ]
+        },
+        {
+            title: 'Management',
+            icon: 'mdi mdi-folder-lock-open',
+            submenus: [
+                // {title: 'Users', url: '/users'},
+                {title: 'Hospitals', url: '/hospitals'},
+                {title: 'Doctors', url: '/doctors'},
+            ]
+        }
+    ];
+    console.log(role);
+    if (role === 'ROLE_ADMIN') {
+        menu[1].submenus.unshift({title: 'Users', url: '/users'});
+    }
+    return menu;
+}
 
 module.exports = app;

@@ -3,3 +3,5 @@
 /uploads/hospitals/*
 /uploads/users/*
 /google-signin-demo/node-modules
+*.iml
+.idea/

@@ -4,11 +4,21 @@ var bodyParser = require('body-parser');
 
 var app = express();
 
+// CORS middleware
+app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    next();
+});
+
 // Body parser
 // This is a middleware that converts the
 // request body in json 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+
+
 
 // Routes
 var appRoutes = require('./routes/app');

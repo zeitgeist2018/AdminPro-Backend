@@ -32,6 +32,34 @@ app.get('/', (req, res, next) => {
         });
 });
 
+// Get by Id
+app.get('/:id', (req, res) => {
+    const id = req.params.id;
+    Doctor.findById(id)
+        .populate('user', 'name email image')
+        .populate('hospital')
+        .exec((err, doctor) => {
+            if (err) {
+                return res.status(500).json({
+                    ok: false,
+                    message: 'Error retrieving doctor',
+                    errors: err
+                });
+            }
+            if (!doctor) {
+                return res.status(400).json({
+                    ok: false,
+                    message: `The doctor with id ${id} does not exist`,
+                    errors: {message: 'The doctor does not exist'}
+                });
+            }
+            res.status(200).json({
+                ok: true,
+                doctor: doctor
+            });
+        });
+});
+
 // Create Doctor
 app.post('/', authMiddleware.verifyToken, (req, res, next) => {
     var body = req.body;
@@ -71,7 +99,7 @@ app.put('/:id', authMiddleware.verifyToken, (req, res) => {
             return res.status(400).json({
                 ok: false,
                 message: `The doctor with id ${id} does not exist`,
-                errors: { message: 'The doctor does not exist' }
+                errors: {message: 'The doctor does not exist'}
             });
         }
         var body = req.body;
@@ -110,7 +138,7 @@ app.delete('/:id', authMiddleware.verifyToken, (req, res) => {
             return res.status(400).json({
                 ok: false,
                 message: `The doctor with id ${id} does not exist`,
-                errors: { message: 'The doctor does not exist' }
+                errors: {message: 'The doctor does not exist'}
             });
         }
         res.status(200).json({

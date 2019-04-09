@@ -4,6 +4,32 @@ var authMiddleware = require('../middleware/auth');
 var app = express();
 var Hospital = require('../models/hospital');
 
+// Get by Id
+app.get('/:id', (req, res, next) => {
+    const id = req.params.id;
+    Hospital.findById(id)
+        .populate('user', 'name email img')
+        .exec((err, hospital) => {
+            if (err) {
+                return res.status(500).json({
+                    ok: false,
+                    message: 'Error loading hospital',
+                    errors: err
+                });
+            }
+            if(!hospital){
+                return res.status(400).json({
+                    ok: false,
+                    message: `The hospital with id ${id} does not exist`,
+                    errors: { message: 'The hospital does not exist' }
+                });
+            }
+            res.status(200).json({
+                ok: true,
+                hospital: hospital
+            });
+        });
+});
 
 // Get all Hospitals
 app.get('/', (req, res, next) => {
