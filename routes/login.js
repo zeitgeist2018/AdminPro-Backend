@@ -28,6 +28,16 @@ async function verify(token) {
     }
 }
 
+const authMiddleware = require('../middleware/auth');
+
+app.get('/refresh-token', authMiddleware.verifyToken, (req, res) => {
+    var token = jwt.sign({user: req.user}, SEED, {expiresIn: 14400});
+    return res.status(200).json({
+        ok: true,
+        token: token
+    });
+});
+
 app.post('/google', async (req, res) => {
     //const token = req.body.token;
     const token = req.headers.authorization;
